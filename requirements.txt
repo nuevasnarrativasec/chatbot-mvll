@@ -7,3 +7,4 @@ langchain-core==0.1.52
 langchain-openai==0.1.6
 colorama
 pinecone-client
+langchain-pinecone
