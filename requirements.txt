@@ -1,9 +1,6 @@
-streamlit==1.32.0
-openai==0.28.1
-langchain==0.0.300
-pinecone-client==2.2.4
-supabase
-tiktoken
-pypdf
-python-dotenv
-colorama
+streamlit
+pillow
+openai
+langchain
+langchain-core
+langchain-community
