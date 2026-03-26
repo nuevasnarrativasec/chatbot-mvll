@@ -1,7 +1,7 @@
 streamlit
 pillow
 openai
-langchain
+langchain==0.0.350
 langchain-core
 langchain-community
 langchain-openai
