@@ -9,3 +9,4 @@ colorama
 pinecone-client
 langchain-pinecone
 python-dotenv
+pypdf
