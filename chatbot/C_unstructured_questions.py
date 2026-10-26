@@ -1,7 +1,8 @@
 from openai import OpenAI
 import streamlit as st
-from pinecone import Pinecone
-from chatbot.backend.vector_store import INDEX_NAME, EMBEDDING_MODEL
+import json
+from pathlib import Path
+from chatbot.backend.vector_store import EMBEDDING_MODEL
 
 main_response_prompt = """
 Eres un chatbot diseñado exclusivamente para responder preguntas relacionadas con las columnas de Piedra de Toque de Mario Vargas Llosa. Tienes acceso a un corpus de 261 columnas, y tu objetivo es responder de manera precisa y útil a cualquier pregunta sobre los temas, estilos, contextos, y análisis de las menciones que Mario Vargas Llosa hace en sus escritos.
@@ -28,8 +29,9 @@ client = OpenAI(
     api_key=st.secrets["OPENAI_API_KEY"]
 )
 
-pinecone_client = Pinecone(api_key=st.secrets["PINECONE_API_KEY"])
-index = pinecone_client.Index(INDEX_NAME)
+embeddings_path = Path(__file__).resolve().parents[1] / "embeddings_v0.json"
+with embeddings_path.open(encoding="utf-8") as embeddings_file:
+    documents = json.load(embeddings_file)
 
 def get_relevant_documents(query):
     query_embedding_response = client.embeddings.create(
@@ -37,36 +39,29 @@ def get_relevant_documents(query):
         model=EMBEDDING_MODEL
     )
     query_embedding = query_embedding_response.data[0].embedding
-    relevant_documents = index.query(
-        vector=query_embedding, 
-        top_k=15, 
-        include_metadata=True
-    )
-    # for i in relevant_documents["matches"]:
-    #     print(i["metadata"]["FECHA"]," | ",i["metadata"]["TITULO"]," | ",i["score"])
-    
-    # Vamos a filtrar solo los docs cuyo score > 0.20
-    filtered_matches = [
-        doc for doc in relevant_documents["matches"] if doc["score"] > 0.30
+    scored_documents = [
+        (
+            sum(query_value * document_value for query_value, document_value in zip(query_embedding, document["values"])),
+            document,
+        )
+        for document in documents
     ]
-    if not filtered_matches:
+    scored_documents.sort(key=lambda item: item[0], reverse=True)
+    selected_matches = [
+        (score, document)
+        for score, document in scored_documents
+        if score > 0.30
+    ][:10]
+    if not selected_matches:
         return None
-    
-    # high_score_matches = [
-    #     doc for doc in filtered_matches if doc["score"] > 0.50
-    # ]
-    if filtered_matches:
-        selected_matches = filtered_matches[:10]
-    else:
-        selected_matches = filtered_matches[:3]
 
     relevant_documents_str = "\n\n".join([
-        f"Título del artículo: {doc['metadata']['TITULO']}\n"
-        f"Año: {doc['metadata']['AÑO']}\n"
-        f"Fecha: {doc['metadata']['FECHA']}\n"
-        f"Extracto: {doc['metadata']['text']}\n"
-        f"Score: {doc['score']}"
-        for doc in selected_matches
+        f"Título del artículo: {document['metadata']['TITULO']}\n"
+        f"Año: {document['metadata']['AÑO']}\n"
+        f"Fecha: {document['metadata']['FECHA']}\n"
+        f"Extracto: {document['metadata']['text']}\n"
+        f"Score: {score}"
+        for score, document in selected_matches
     ])
     # print(relevant_documents_str)
 
