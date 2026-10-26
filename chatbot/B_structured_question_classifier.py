@@ -25,7 +25,7 @@ def gr_classify_structured_questions(query, messages):
     messages_for_api = [{'role': 'user', 'content': format_response}]
     response = client.chat.completions.create(
         messages=messages_for_api,
-        model='gpt-3.5-turbo',
+        model='gpt-4o-mini',
         stream=False,
     )
 
