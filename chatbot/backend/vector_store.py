@@ -1,17 +1,12 @@
-from openai import OpenAI
-from dotenv import load_dotenv
-from chatbot.backend.create_embeddings import ENCODING_FORMAT
-from pinecone import Pinecone, PodSpec
 import os
 import itertools
 import json
 
-load_dotenv()
 BATCH_SIZE = 10
-openai_client = OpenAI(api_key = os.getenv('OPENAI_API_KEY'))
 INDEX_NAME = "vo-articles"
 # INDEX_NAME = "vo-articles-v2"
 EMBEDDING_MODEL = "text-embedding-3-small"
+ENCODING_FORMAT = "Windows-1252"
 
 
 def batches_generator(vectors, batch_size):
@@ -26,6 +21,10 @@ def batches_generator(vectors, batch_size):
 
 
 def main():
+    from dotenv import load_dotenv
+    from pinecone import Pinecone
+
+    load_dotenv()
     print("Loading Vectors")
 
     with open("embeddings.json", "r", encoding=ENCODING_FORMAT) as f:
